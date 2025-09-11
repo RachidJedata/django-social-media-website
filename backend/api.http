@@ -1,0 +1,18 @@
+###
+POST http://localhost:8000/auth/jwt/create/ HTTP/1.1
+content-type: application/json
+
+{
+   "username":"bmcfarland",
+   "password":"admin123"
+}
+
+
+###
+GET http://localhost:8000/auth/users/me/ HTTP/1.1
+Authorization: JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU4Mjg4OTk5LCJpYXQiOjE3NTc1OTc3OTksImp0aSI6ImU4YjI0YTY1Nzg4OTQ1Mzc4ZjM2Y2M2MmRhNDZiMGYyIiwidXNlcl9pZCI6ImUyZDk1ZGUwLWZlZWUtNGQwNi1iNDgwLTlkNzg3MDgxOWRjNSJ9.ARekAIO0U1tibUXznlWlOfD1MWW94LVZOibnNGrhmfA
+
+
+###
+GET http://localhost:8000/ HTTP/1.1
+Authorization: JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU4MjkwOTcyLCJpYXQiOjE3NTc1OTk3NzIsImp0aSI6IjVmMWY4MTdjY2M3OTQ2ZGI5ZDQ3ZDJhZjc1ZDRhNzAwIiwidXNlcl9pZCI6IjMzOWU1ODI5LTQ3NTAtNDdiZi04Y2U2LTNjNzlhMjNjOTU1NSJ9.tWc2R92-yfCuqQunPCKBzzgllZHABDplN58wd6JLiRM

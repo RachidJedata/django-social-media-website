@@ -1,0 +1,7 @@
+openapi: 3.0.3
+info:
+  title: Social Media API
+  version: 1.0.0
+  description: Social Media Django Application
+paths: {}
+components: {}
