@@ -8,7 +8,7 @@ class CustomUserManager(BaseUserManager):
     """
     Custom user manager to handle user creation with a UUID primary key.
     """
-    def create_user(self, username, password=None, **extra_fields):
+    def create_user(self, username, password, **extra_fields):
         # The username field is now the primary required field.
         if not username:
             raise ValueError('The Username field must be set')
@@ -18,7 +18,7 @@ class CustomUserManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, username, password=None, **extra_fields):
+    def create_superuser(self, username, password, **extra_fields):
             extra_fields.setdefault('is_staff', True)
             extra_fields.setdefault('is_superuser', True)
             extra_fields.setdefault('is_active', True)
@@ -40,6 +40,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email = models.EmailField(unique=True,blank=True,null=True)
     username = models.CharField(max_length=150, unique=True)
+    first_name = models.CharField(max_length=150, blank=True,null=True)
+    last_name = models.CharField(max_length=150, blank=True,null=True)
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     date_joined = models.DateTimeField(auto_now_add=True)

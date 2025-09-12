@@ -16,3 +16,20 @@ Authorization: JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNj
 ###
 GET http://localhost:8000/ HTTP/1.1
 Authorization: JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU4MjkwOTcyLCJpYXQiOjE3NTc1OTk3NzIsImp0aSI6IjVmMWY4MTdjY2M3OTQ2ZGI5ZDQ3ZDJhZjc1ZDRhNzAwIiwidXNlcl9pZCI6IjMzOWU1ODI5LTQ3NTAtNDdiZi04Y2U2LTNjNzlhMjNjOTU1NSJ9.tWc2R92-yfCuqQunPCKBzzgllZHABDplN58wd6JLiRM
+
+
+###
+POST http://localhost:8000/auth/jwt/verify HTTP/1.1
+Content-Type: application/json
+
+{
+   "token" :"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU4MjkwOTcyLCJpYXQiOjE3NTc1OTk3NzIsImp0aSI6IjVmMWY4MTdjY2M3OTQ2ZGI5ZDQ3ZDJhZjc1ZDRhNzAwIiwidXNlcl9pZCI6IjMzOWU1ODI5LTQ3NTAtNDdiZi04Y2U2LTNjNzlhMjNjOTU1NSJ9.tWc2R92-yfCuqQunPCKBzzgllZHABDplN58wd6JLiRM"
+}
+
+###
+POST http://localhost:8000/auth/jwt/refresh HTTP/1.1
+Content-Type: application/json
+
+{
+   "refresh" :"5eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc1OTM5NjE1NSwiaWF0IjoxNzU3NjY4MTU1LCJqdGkiOiJmZDcwZWNkNTA5OGE0MDRjOGEwZDlhYmU2YTM3NzlkYSIsInVzZXJfaWQiOiIzMzllNTgyOS00NzUwLTQ3YmYtOGNlNi0zYzc5YTIzYzk1NTUifQ.CKXGxds_jL1CXFXQrk7QIMhptew5iU-QADOZ-GmJqhw"
+}

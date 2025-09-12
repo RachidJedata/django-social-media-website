@@ -61,12 +61,16 @@ MIDDLEWARE = [
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8080",
-    "http://localhost:8000",
+   
+    "http://localhost:3000",
 ]
 # For local development
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8000',
     'http://127.0.0.1:8000',
+    
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
 ]
 
 ROOT_URLCONF = 'social_book.urls'
@@ -134,8 +138,8 @@ USE_L10N = True
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/3.2/howto/static-files/
+# # Static files (CSS, JavaScript, Images)
+# # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
@@ -168,8 +172,8 @@ SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(days=8), 
     "REFRESH_TOKEN_LIFETIME": timedelta(days=20),  
 
-    "USER_ID_FIELD": "id",
-    "USER_ID_CLAIM": "user_id",
+    # "USER_ID_FIELD": "id",
+    # "USER_ID_CLAIM": "user_id",
 }
 
 # This setting tells Django how to authenticate a user

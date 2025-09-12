@@ -16,7 +16,7 @@ class UserSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'profile']
+        fields = ['id', 'username', 'email', 'profile','first_name','last_name']
 
 class ProfileResponseSerializer(serializers.Serializer):
     user_object = UserSerializer()
@@ -46,28 +46,32 @@ class ProfileSerializer(serializers.ModelSerializer):
 
 class SignupSerializer(serializers.Serializer):
     username = serializers.CharField(max_length=150)
-    email = serializers.EmailField()
+    first_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    last_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    email = serializers.EmailField(required=False, allow_blank=True)
     password = serializers.CharField(write_only=True)
-    password2 = serializers.CharField(write_only=True)
+    confirmPassword = serializers.CharField(write_only=True)
 
     def validate(self, data):
-        if data['password'] != data['password2']:
-            raise serializers.ValidationError({"password": "Password fields didn't match."})
+        if data['password'] != data['confirmPassword']:
+            raise serializers.ValidationError({"message": "Password fields didn't match."})
         
         if User.objects.filter(username=data['username']).exists():
-            raise serializers.ValidationError({"username": "Username is already taken."})
+            raise serializers.ValidationError({"message": "Username is already taken."})
         
         if User.objects.filter(email=data['email']).exists():
-            raise serializers.ValidationError({"email": "Email is already in use."})
+            raise serializers.ValidationError({"message": "Email is already in use."})
 
         return data
 
     def create(self, validated_data):
-        # Create the user without the password2 field
+        # Create the user without the confirmPassword field
         user = User.objects.create_user(
             username=validated_data['username'],
-            email=validated_data['email'],
-            password=validated_data['password']
+            password=validated_data['password'],
+            email=validated_data.get('email', ''),
+            first_name=validated_data.get('first_name', ''),
+            last_name=validated_data.get('last_name', ''),
         )
         user.save()
         

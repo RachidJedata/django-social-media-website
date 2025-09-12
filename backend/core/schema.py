@@ -12,7 +12,7 @@ from graphql_jwt.decorators import login_required
 class UserType(DjangoObjectType):
     class Meta:
         model = User
-        fields = ('id', 'username', 'email')
+        fields = ('id', 'username', 'email','first_name','last_name')
         
 class ProfileType(DjangoObjectType):
     class Meta:
