@@ -1,0 +1,13 @@
+overwrite: true
+schema: "http://localhost:8000/graphql"
+documents: "lib/GraphQL/**/*.ts" # where stored GraphQL files
+generates:
+  ./lib/types.ts:
+    plugins:
+      - "typescript"
+      - "typescript-operations"
+      - "typescript-react-apollo"
+    config:
+      withHooks: true
+      withHOC: false
+      withComponent: false

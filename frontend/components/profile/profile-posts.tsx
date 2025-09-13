@@ -2,15 +2,16 @@
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import type { Post } from "@/lib/types"
 import Image from "next/image"
+import { GetProfileQuery } from "@/lib/types"
 
-interface ProfilePostsProps {
-  posts: Post[]
-}
+// Define a type for a single post
+type PostType = NonNullable<
+  NonNullable<GetProfileQuery['profile']>['user']
+>['posts'][number];
 
-export function ProfilePosts({ posts }: ProfilePostsProps) {
-  if (posts.length === 0) {
+export function ProfilePosts({ posts }: { posts: PostType[] | undefined }) {
+  if (posts && posts.length === 0) {
     return (
       <Card className="w-full">
         <CardContent className="p-8 text-center">
@@ -37,11 +38,11 @@ export function ProfilePosts({ posts }: ProfilePostsProps) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold text-gray-900">Posts</h2>
-        <Badge variant="outline">{posts.length} posts</Badge>
+        <Badge variant="outline">{posts?.length} posts</Badge>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {posts.map((post) => (
+        {posts?.map((post) => (
           <Card key={post.id} className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer">
             <div className="aspect-square relative">
               <Image src={post.image || "/placeholder.svg"} alt="Post" fill className="object-cover" />
@@ -51,14 +52,14 @@ export function ProfilePosts({ posts }: ProfilePostsProps) {
                     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                     </svg>
-                    <span className="font-semibold">{post.no_of_likes}</span>
+                    <span className="font-semibold">{post.likes.length}</span>
                   </div>
                 </div>
               </div>
             </div>
             <CardContent className="p-3">
               <p className="text-sm text-gray-800 line-clamp-2">{post.caption}</p>
-              <p className="text-xs text-gray-500 mt-1">{new Date(post.created_at).toLocaleDateString()}</p>
+              <p className="text-xs text-gray-500 mt-1">{new Date(post.createdAt).toLocaleDateString()}</p>
             </CardContent>
           </Card>
         ))}

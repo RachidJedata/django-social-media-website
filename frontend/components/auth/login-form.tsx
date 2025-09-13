@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,8 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useRouter } from "next/navigation"
 import { useSearchParams } from "next/navigation";
 import { useToast } from "@/hooks/use-toast"
-import { mockUsers } from "@/lib/mock-data"
-import { login } from "@/lib/utils"
+import { useMutation } from "@apollo/client"
+import { LOGIN_MUTATION } from "@/lib/graphQL/queries"
 
 export function LoginForm() {
   const [username, setUsername] = useState("")
@@ -22,8 +21,7 @@ export function LoginForm() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl");
 
-
-
+  const [loginUser] = useMutation(LOGIN_MUTATION);
 
   const { toast } = useToast()
 
@@ -31,16 +29,32 @@ export function LoginForm() {
     e.preventDefault()
     setIsLoading(true)
 
+
     try {
+      const response = await loginUser({
+        variables: { username, password },
+      });
 
-      // Await the login call 
-      await login(username, password)
 
-      console.log("Login finished, navigating...");
+      // Check if there were GraphQL errors
+      if (response.errors) {
+        console.error("GraphQL errors:", response.errors);
+        throw new Error(response.errors[0].message);
+      }
+
+      if (!response.data) {
+        throw new Error("No data received from server");
+      }
+
+
+      const token = response.data.tokenAuth.token;
+
+      localStorage.setItem('JWTToken', token);
 
       router.push(callbackUrl || '/feed')
 
     } catch (error) {
+      console.error("Login error details:", error);
 
       if (error instanceof Error) {
         toast({
@@ -50,15 +64,13 @@ export function LoginForm() {
       } else {
         toast({
           title: "Error",
-          description: String(error),
+          description: "An unknown error occurred",
         });
       }
-
     } finally {
       setIsLoading(false)
     }
   }
-
 
   return (
     <Card className="w-full max-w-md mx-auto">

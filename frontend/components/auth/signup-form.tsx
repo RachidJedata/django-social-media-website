@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
-import { login } from "@/lib/utils"
+import { LOGIN_MUTATION } from "@/lib/graphQL/queries"
+import { useMutation } from "@apollo/client"
 
 export function SignupForm() {
   const [formData, setFormData] = useState({
@@ -21,6 +22,7 @@ export function SignupForm() {
     confirmPassword: "",
   })
   const [isLoading, setIsLoading] = useState(false)
+  const [loginUser] = useMutation(LOGIN_MUTATION);
 
 
   const router = useRouter()
@@ -66,8 +68,24 @@ export function SignupForm() {
 
 
       if (response.status === 201) {
-        await login(formData.username, formData.password)
-        //redirect
+        const response = await loginUser({
+          variables: { username: formData.username, password: formData.password },
+        });
+
+        // Check if there were GraphQL errors
+        if (response.errors) {
+          console.error("GraphQL errors:", response.errors);
+          throw new Error(response.errors[0].message);
+        }
+
+        if (!response.data) {
+          throw new Error("No data received from server");
+        }
+
+        const token = response.data.tokenAuth.token;
+
+        localStorage.setItem('JWTToken', token);
+
         router.push(callbackUrl || '/feed')
       }
       else {

@@ -1,7 +1,7 @@
 "use client";
 
-import { ApolloProvider } from "@apollo/client/react";
-import client from "@/lib/apollo-client";
+import { ApolloProvider } from "@apollo/client";
+import client from "@/lib/graphQL/apollo-client";
 
 export default function ApolloProviderWrapper({
     children,

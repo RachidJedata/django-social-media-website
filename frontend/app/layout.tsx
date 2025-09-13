@@ -7,9 +7,8 @@ import ApolloProviderWrapper from '@/components/ApolloProviderWrapper'
 import { Toast, ToastProvider } from '@/components/ui/toast'
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
-  generator: 'v0.app',
+  title: 'Social Connect',
+  description: 'Developed By The Full Stack Developer Rachid Jedata , and note that it doesn\'t contain all functionalities of a real social media app',
 }
 
 export default function RootLayout({

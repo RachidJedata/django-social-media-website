@@ -1,51 +1,59 @@
 "use client"
 
-import { useState } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import type { Post, User, Profile } from "@/lib/types"
 import Image from "next/image"
 import Link from "next/link"
+import { GetFeedDataQuery } from "@/lib/types"
+import { useUser } from "../auth/AuthComponent"
+import { useEffect, useState } from "react"
 
-interface PostCardProps {
-  post: Post
-  user: User
-  profile: Profile
-  isLiked?: boolean
-  onLikeToggle?: () => void
-}
+type FeedType = GetFeedDataQuery['feed'];
 
-export function PostCard({ post, user, profile, isLiked = false, onLikeToggle }: PostCardProps) {
-  const [liked, setLiked] = useState(isLiked)
-  const [likeCount, setLikeCount] = useState(post.no_of_likes)
+export function PostCard({ post }: { post: NonNullable<FeedType>[number] }) {
+
+  const [liked, setLiked] = useState(false);
+
+  const myProfile = useUser();
+
+  useEffect(() => {
+    const exist = post?.likes.filter(u => u.user.username === myProfile?.user.username)
+    // console.log("liked ", exist);
+
+    setLiked(!!exist?.length)
+
+
+  }, [liked])
+
+
 
   const handleLikeClick = () => {
-    setLiked(!liked)
-    setLikeCount(liked ? likeCount - 1 : likeCount + 1)
-    onLikeToggle?.()
+
   }
+
+  if (!post) return (<></>)
 
   return (
     <Card className="w-full max-w-lg mx-auto">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <Link
-            href={`/profile/${user.username}`}
+            href={`/profile/${post.user.username}`}
             className="flex items-center gap-3 hover:opacity-80 transition-opacity"
           >
             <Avatar className="w-10 h-10">
-              <AvatarImage src={profile.profileimg || "/placeholder.svg"} alt={user.username} />
+              <AvatarImage  src={post.user.profile?.profileimg || "/placeholder.svg"} alt={post.user.username} />
               <AvatarFallback>
-                {user.first_name[0]}
-                {user.last_name[0]}
+                {post.user.firstName}
+                {post.user.lastName}
               </AvatarFallback>
             </Avatar>
             <div>
               <p className="font-semibold text-sm text-gray-900">
-                {user.first_name} {user.last_name}
+                {post.user.firstName} {post.user.lastName}
               </p>
-              <p className="text-xs text-gray-500">@{user.username}</p>
+              <p className="text-xs text-gray-500">@{post.user.username}</p>
             </div>
           </Link>
           <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
@@ -117,13 +125,13 @@ export function PostCard({ post, user, profile, isLiked = false, onLikeToggle }:
         </div>
 
         <div className="space-y-1">
-          <p className="font-semibold text-sm text-gray-900">{likeCount} likes</p>
+          <p className="font-semibold text-sm text-gray-900">{post.likes.length} likes</p>
           <div className="text-sm">
-            <span className="font-semibold text-gray-900">{user.username}</span>{" "}
+            <span className="font-semibold text-gray-900">{myProfile?.user.username}</span>{" "}
             <span className="text-gray-800">{post.caption}</span>
           </div>
           <p className="text-xs text-gray-500 uppercase tracking-wide">
-            {new Date(post.created_at).toLocaleDateString("en-US", {
+            {new Date(post.createdAt).toLocaleDateString("en-US", {
               month: "long",
               day: "numeric",
             })}
