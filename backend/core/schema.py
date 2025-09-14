@@ -1,5 +1,3 @@
-# schema.py
-
 import graphene
 from graphene_django.types import DjangoObjectType
 from .models import Profile, FollowersCount, Post, LikePost, User
@@ -7,6 +5,10 @@ from graphql_jwt.decorators import login_required
 from django.core.files.storage import default_storage
 import graphql_jwt
 from django.core.files.base import ContentFile
+import random
+from django.db.models import Count
+from django.utils import timezone
+from datetime import timedelta
 import base64
 from django.conf import settings
 import datetime
@@ -214,10 +216,9 @@ class Query(graphene.ObjectType):
                             'likes',
                             queryset=LikePost.objects.select_related('user')
                         )
-                    )
+                    ).order_by('-created_at')
                 )
             ).get(username=username)
-            
             return user.profile
         except User.DoesNotExist:
             return None
@@ -233,8 +234,42 @@ class Query(graphene.ObjectType):
     @login_required
     def resolve_feed(self, info):
         current_user = info.context.user
-        following_user_ids = FollowersCount.objects.filter(follower=current_user).values_list('user__id', flat=True)
-        return Post.objects.filter(user__id__in=following_user_ids).order_by('-created_at')
+        
+        # Get following user IDs
+        following_user_ids = FollowersCount.objects.filter(
+            follower=current_user
+        ).values_list('user__id', flat=True)
+        
+        if not following_user_ids:
+            # Show popular posts or posts from suggested users for exploration
+            return Post.objects.all().select_related('user').prefetch_related('likes')\
+                    .annotate(like_count=Count('likes'))\
+                    .order_by('-like_count', '?')[:8]  # Popular posts first, then random
+    
+        
+        # Get recent posts (last 7 days) ordered by engagement
+        recent_posts = Post.objects.filter(
+            user__id__in=following_user_ids,
+            created_at__gte=timezone.now() - timedelta(days=7)
+        ).select_related('user').prefetch_related('likes')
+        
+        # Get older posts for filling the feed
+        older_posts = Post.objects.filter(
+            user__id__in=following_user_ids,
+            created_at__lt=timezone.now() - timedelta(days=7)
+        ).select_related('user').prefetch_related('likes')
+        
+        # Convert to lists and shuffle within categories
+        recent_posts_list = list(recent_posts)
+        older_posts_list = list(older_posts)
+        
+        random.shuffle(recent_posts_list)
+        random.shuffle(older_posts_list)
+        
+        # Combine with priority for recent posts
+        feed_posts = recent_posts_list + older_posts_list
+        
+        return feed_posts
 
     @login_required
     def resolve_suggestions(self, info):
