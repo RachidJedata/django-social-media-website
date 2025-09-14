@@ -42,8 +42,10 @@ def run():
     users = []
     for _ in range(NUM_USERS):
         username = fake.user_name()
+        firstName = fake.first_name_male()
+        lastName = fake.last_name_male()
         try:
-            user = User.objects.create_user(username=username, password='admin123')
+            user = User.objects.create_user(username=username, password='admin123', first_name=firstName,last_name=lastName)
             # Profile.objects.create(user=user)
             users.append(user)
         except IntegrityError:

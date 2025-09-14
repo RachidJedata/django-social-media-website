@@ -57,20 +57,20 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # 'graphql_jwt.middleware.JSONWebTokenMiddleware',
 ]
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:8080",
-   
     "http://localhost:3000",
 ]
 # For local development
 CSRF_TRUSTED_ORIGINS = [
-    'http://localhost:8000',
-    'http://127.0.0.1:8000',
-    
     'http://localhost:3000',
     'http://127.0.0.1:3000',
+]
+
+CSRF_TRUSTED_COOKIES_DOMAINS = [
+    'localhost',
 ]
 
 ROOT_URLCONF = 'social_book.urls'
@@ -167,14 +167,7 @@ REST_FRAMEWORK = {
 }
 
 
-SIMPLE_JWT = {
-    "AUTH_HEADER_TYPES": ('JWT',),
-    "ACCESS_TOKEN_LIFETIME": timedelta(days=8), 
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=20),  
 
-    # "USER_ID_FIELD": "id",
-    # "USER_ID_CLAIM": "user_id",
-}
 
 # This setting tells Django how to authenticate a user
 AUTHENTICATION_BACKENDS = [
@@ -205,3 +198,23 @@ GRAPHENE = {
     ],
 
 }
+
+
+GRAPHQL_JWT = {
+    "JWT_VERIFY_EXPIRATION": True,
+    "JWT_EXPIRATION_DELTA": timedelta(days=8),
+    "JWT_REFRESH_EXPIRATION_DELTA": timedelta(days=20),
+}
+
+
+SIMPLE_JWT = {
+    "AUTH_HEADER_TYPES": ('JWT',),
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=8), 
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=20),  
+
+    # "USER_ID_FIELD": "id",
+    # "USER_ID_CLAIM": "user_id",
+}
+
+
+MY_DOMAIN="http://localhost:8000"

@@ -21,11 +21,17 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, Spec
 from djoser.urls import jwt
 from graphene_django.views import GraphQLView
 
+from django.views.decorators.csrf import csrf_exempt
+from graphene_file_upload.django import FileUploadGraphQLView
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('core.urls')),
 
-    path("graphql", GraphQLView.as_view(graphiql=True)),
+    path(r"graphql",   csrf_exempt(FileUploadGraphQLView.as_view(graphiql=True))),
+
+    # You can keep your old GraphQL view here if you have one for non-upload requests
+    # path("graphql", csrf_exempt(GraphQLView.as_view(graphiql=True))),
 
     re_path(r'^auth/', include('djoser.urls')),
     re_path(r'^auth/', include('djoser.urls.jwt')),
@@ -35,7 +41,7 @@ urlpatterns = [
     # Optional UI:
     path('api/schema/swagger-ui/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('api/schema/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # urlpatterns = urlpatterns+static(settings.MEDIA_URL,
 # document_root=settings.MEDIA_ROOT)

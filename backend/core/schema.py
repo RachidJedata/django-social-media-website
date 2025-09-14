@@ -3,8 +3,16 @@
 import graphene
 from graphene_django.types import DjangoObjectType
 from .models import Profile, FollowersCount, Post, LikePost, User
-from django.db.models import Q
 from graphql_jwt.decorators import login_required
+from django.core.files.storage import default_storage
+import graphql_jwt
+from django.core.files.base import ContentFile
+import base64
+from django.conf import settings
+import datetime
+import uuid
+from django.db.models import Prefetch
+
 
 # --- Object Types ---
 # These classes define the GraphQL types for your Django models.
@@ -12,32 +20,34 @@ from graphql_jwt.decorators import login_required
 class UserType(DjangoObjectType):
     class Meta:
         model = User
-        fields = ('id', 'username', 'email','first_name','last_name')
+        fields = ('id', 'username', 'email','first_name','last_name','profile','posts','date_joined')
         
 class ProfileType(DjangoObjectType):
-    class Meta:
-        model = Profile
-        fields = ('id', 'user', 'bio','profileimg','location')
-        
     followers_count = graphene.Int()
     following_count = graphene.Int()
     is_following = graphene.Boolean()
+    
+    class Meta:
+        model = Profile
+        fields = ('id', 'user', 'bio','profileimg','location','followers_count','following_count','is_following','location')
+        
 
     def resolve_followers_count(self, info):
-        return FollowersCount.objects.filter(user=self.user.username).count()
+        return FollowersCount.objects.filter(user=self.user).count()
 
     def resolve_following_count(self, info):
-        return FollowersCount.objects.filter(follower=self.user.username).count()
+        return FollowersCount.objects.filter(follower=self.user).count()
         
     @login_required
     def resolve_is_following(self, info):
-        current_user = info.context.user.username
-        return FollowersCount.objects.filter(follower=current_user, user=self.user.username).exists()
+        current_user = info.context.user
+        return FollowersCount.objects.filter(follower=current_user, user=self.user).exists()
 
 class PostType(DjangoObjectType):
     class Meta:
         model = Post
-        fields = ('id', 'user','image', 'caption','descritpion', 'created_at', 'likes')
+        fields = ('id', 'user','image', 'caption','description', 'created_at', 'likes')
+        ordering = ['-created_at']  # Default ordering for all queries
         
 class LikePostType(DjangoObjectType):
     class Meta:
@@ -49,23 +59,52 @@ class FollowersCountType(DjangoObjectType):
         model = FollowersCount
         fields = ('id', 'follower', 'user')
 
-# --- Mutations ---
-# These classes define the actions that modify data.
-
 class CreatePost(graphene.Mutation):
     class Arguments:
-        image = graphene.String(required=True)
-        caption = graphene.String()
-        descritpion = graphene.String()
+        image = graphene.String(required=True)  # Base64 string
+        caption = graphene.String(required=False)
+        description = graphene.String(required=False)
     
     post = graphene.Field(PostType)
 
     @login_required
-    def mutate(self, info, image,caption,description = None):
+    def mutate(self, info, image, caption, description=None):
         user = info.context.user
-        post = Post(user=user, image=image, caption=caption,description=description)
-        post.save()
-        return CreatePost(post=post)
+        
+
+         # Handle base64 image
+        if ';base64,' in image:
+            format, imgstr = image.split(';base64,')
+            ext = format.split('/')[-1]
+    
+            
+            timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+            
+            # Generate a unique filename
+            filename = f"{user.id}_{timestamp}_{uuid.uuid4().hex}.{ext}"
+            
+            # Decode the base64 image
+            data = ContentFile(base64.b64decode(imgstr), name=filename)
+            
+            # Save the file
+            file_path = default_storage.save(filename, data)
+            image_url = settings.MY_DOMAIN + default_storage.url(file_path)
+
+            
+            
+            # Create the post
+            post = Post(
+                user=user, 
+                image=image_url,
+                caption=caption,
+                description=description
+            )
+            post.save()
+            
+            return CreatePost(post=post)
+        else:
+            raise Exception("Invalid image format")
+        
 
 class UpdateProfile(graphene.Mutation):
     class Arguments:
@@ -136,6 +175,11 @@ class LikePostMutation(graphene.Mutation):
 
 
 class Mutation(graphene.ObjectType):
+    token_auth = graphql_jwt.ObtainJSONWebToken.Field()
+    verify_token = graphql_jwt.Verify.Field()
+    refresh_token = graphql_jwt.Refresh.Field()
+
+
     create_post = CreatePost.Field()
     update_profile = UpdateProfile.Field()
     follow_user = FollowUser.Field()
@@ -146,16 +190,34 @@ class Mutation(graphene.ObjectType):
 # These classes define how to retrieve data.
 
 class Query(graphene.ObjectType):
-    all_users = graphene.List(UserType)
     profile = graphene.Field(ProfileType, username=graphene.String())
+    my_profile = graphene.Field(ProfileType)
     search_profiles = graphene.List(ProfileType, username=graphene.String())
     feed = graphene.List(PostType)
     suggestions = graphene.List(ProfileType)
 
     @login_required
+    def resolve_my_profile(self,info):
+        current_user = info.context.user
+        profile = Profile.objects.select_related('user').get(user=current_user)
+        return profile
+
+    @login_required
     def resolve_profile(self, info, username):
         try:
-            user = User.objects.get(username=username)
+            # Use select_related and prefetch_related to optimize queries
+            user = User.objects.select_related('profile').prefetch_related(
+                Prefetch(
+                    'posts',
+                    queryset=Post.objects.select_related('user').prefetch_related(
+                        Prefetch(
+                            'likes',
+                            queryset=LikePost.objects.select_related('user')
+                        )
+                    )
+                )
+            ).get(username=username)
+            
             return user.profile
         except User.DoesNotExist:
             return None

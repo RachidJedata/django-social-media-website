@@ -68,7 +68,7 @@ class Profile(models.Model):
 
 class Post(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE,related_name="posts")
     image = models.ImageField(upload_to='post_images')
     description = models.TextField(null=True,blank=True)
     caption = models.TextField()
@@ -79,7 +79,7 @@ class Post(models.Model):
         return self.user.username
 
 class LikePost(models.Model):
-    post = models.ForeignKey(Post, on_delete=models.CASCADE)
+    post = models.ForeignKey(Post, on_delete=models.CASCADE,related_name="likes")
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
