@@ -6,16 +6,18 @@ import { Badge } from "@/components/ui/badge"
 import { GetProfileQuery } from "@/lib/types"
 import Image from "next/image"
 import FollowButton from "./follow-button"
+import { useEffect } from "react"
 
 export function ProfileHeader({
   profile,
   isOwnProfile = false,
-  onFollowToggle,
 }: {
   isOwnProfile: boolean,
-  onFollowToggle?: () => void,
   profile: GetProfileQuery['profile']
 }) {
+
+  if (!profile) return (<></>)
+
   return (
     <Card className="w-full">
       <CardContent className="p-6">

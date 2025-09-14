@@ -44,10 +44,6 @@ export default function ProfilePage({
   if (loading) return (<>loading...</>)
 
 
-  const handleFollowToggle = async () => {
-  }
-
-
   const isOwnProfile = myProfile?.user.username === profile?.user.username
 
   return (
@@ -58,7 +54,6 @@ export default function ProfilePage({
           <ProfileHeader
             profile={profile}
             isOwnProfile={isOwnProfile}
-            onFollowToggle={handleFollowToggle}
           />
           <ProfilePosts posts={profile?.user.posts} />
         </div>

@@ -113,3 +113,38 @@ export const GET_PROFILE = gql`
         }
 }
 `
+
+export const CREATE_POST_MUTATION = gql`
+  mutation CreatePost($image: String!, $caption: String!) {
+    createPost(image: $image, caption: $caption) {
+      post {
+        id
+        caption
+        image
+        createdAt
+        user {
+          id
+          username
+        }
+      }
+    }
+  }
+`
+
+export const FOLLOW_USER_MUTATION = gql`
+  mutation FollowUser($username: String!) {
+    followUser(username: $username) {
+      followed
+      message
+    }
+  }
+`
+
+
+export const LIKE_POST = gql`
+  mutation FollowMutation($postId:UUID!){
+    likePost(postId:$postId){
+      liked
+    }
+  }
+`

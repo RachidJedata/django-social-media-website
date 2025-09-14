@@ -9,27 +9,11 @@ import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { useUser } from "../auth/AuthComponent"
 import Image from "next/image"
-import { gql, useMutation } from "@apollo/client"
+import { useMutation } from "@apollo/client"
 import { convertToBase64 } from "@/lib/utils"
+import { CREATE_POST_MUTATION } from "@/lib/graphQL/queries"
 
-// GraphQL mutation for creating a post
-// The 'image' field is of type 'Upload' to work with `graphene-file-upload`
-const CREATE_POST_MUTATION = gql`
-  mutation CreatePost($image: String!, $caption: String!) {
-    createPost(image: $image, caption: $caption) {
-      post {
-        id
-        caption
-        image
-        createdAt
-        user {
-          id
-          username
-        }
-      }
-    }
-  }
-`
+
 
 export function CreatePost() {
   const [caption, setCaption] = useState("")

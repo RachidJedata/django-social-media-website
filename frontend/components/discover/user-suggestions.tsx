@@ -14,7 +14,6 @@ export function UserSuggestions({ profiles }: { profiles: GetFeedDataQuery['sugg
 
 
   return (
-    // <Card className="w-full">
     <Card className="w-full fixed right-7 top-28 max-w-xs z-50">
       <CardHeader>
         <CardTitle className="text-lg">Suggested for you</CardTitle>
