@@ -2,7 +2,6 @@
 
 import { ApolloClient, InMemoryCache, ApolloProvider, ApolloLink, createHttpLink } from "@apollo/client";
 import { setContext } from '@apollo/client/link/context';
-import React from "react";
 
 // This is the correct client setup with JWT and a fallback for server-side rendering.
 const createApolloClient = () => {
@@ -22,7 +21,7 @@ const createApolloClient = () => {
     });
 
     const httpLink = createHttpLink({
-        uri: "http://localhost:8000/graphql",
+        uri: `${process.env.NEXT_PUBLIC_API_URL}/graphql`,
     });
 
     return new ApolloClient({

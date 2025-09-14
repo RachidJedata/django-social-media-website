@@ -42,6 +42,7 @@ def run():
     users = []
     for _ in range(NUM_USERS):
         username = fake.user_name()
+        print(f'username {username}')
         firstName = fake.first_name_male()
         lastName = fake.last_name_male()
         try:
@@ -100,6 +101,7 @@ def run():
                 # Handle cases where a user might try to follow someone they already follow
                 continue
     print("Follows have been created.")
+
 
     print("\n--- Population complete! ---")
     print(f"Total Users: {User.objects.count()}")

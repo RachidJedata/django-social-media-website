@@ -1,0 +1,58 @@
+services:
+  backend:
+    build: ./backend
+    container_name: backend
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+      - db
+    environment:
+      - CACHE_URL=redis://redis:6379/1
+    command: >
+      sh -c "python manage.py migrate &&
+             gunicorn social_book.wsgi:application --bind 0.0.0.0:8000 --workers 4"
+    networks:
+      - frontend
+      - backend
+
+  db:
+    container_name: db
+    image: postgres:17
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    env_file:
+      - ./backend/.env
+    networks:
+      - backend
+
+  redis:
+    container_name: redis
+    image: "redis:latest"
+    ports:
+      - "6379:6379"
+    networks:
+      - backend
+
+  frontend:
+    container_name: frontend
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - frontend
+    environment:
+      - NEXT_PUBLIC_API_URL=http://backend:8000 
+
+volumes:
+  postgres_data:
+networks:
+  frontend:
+  backend:

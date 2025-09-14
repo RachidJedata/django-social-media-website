@@ -5,6 +5,7 @@ import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 import ApolloProviderWrapper from '@/components/ApolloProviderWrapper'
 import { Toast, ToastProvider } from '@/components/ui/toast'
+import { Suspense } from 'react'
 
 export const metadata: Metadata = {
   title: 'Social Connect',
@@ -20,7 +21,9 @@ export default function RootLayout({
     <html lang="en">
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
         <ApolloProviderWrapper>
-          {children}
+          <Suspense>
+            {children}
+          </Suspense>
         </ApolloProviderWrapper>
         <Analytics />
         <ToastProvider>

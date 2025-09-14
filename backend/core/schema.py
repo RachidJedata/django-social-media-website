@@ -14,6 +14,7 @@ from django.conf import settings
 import datetime
 import uuid
 from django.db.models import Prefetch
+from django.core.cache import cache
 
 
 # --- Object Types ---
@@ -135,20 +136,30 @@ class FollowUser(graphene.Mutation):
 
     @login_required
     def mutate(self, info, username):
-        follower= info.context.user
+        follower = info.context.user
         try:
             followedUser = User.objects.get(username=username)
         except User.DoesNotExist:
             raise Exception("user with username doesn't exist")
         
-        if FollowersCount.objects.filter(follower=follower, user=followedUser).exists():
+        is_following = FollowersCount.objects.filter(follower=follower, user=followedUser).exists()
+
+        if is_following:
             FollowersCount.objects.get(follower=follower, user=followedUser).delete()
+            # Invalidate the caches after unfollowing
+            cache.delete(f'graphql_profile_{username}')
+            cache.delete(f'graphql_profile_{follower.username}')
+            cache.delete(f'graphql_suggestions_{follower.id}')
             return FollowUser(followed=False, message=f"Successfully unfollowed {username}.")
         else:
             FollowersCount.objects.create(follower=follower, user=followedUser)
+            # Invalidate the caches after following
+            cache.delete(f'graphql_profile_{username}')
+            cache.delete(f'graphql_profile_{follower.username}')
+            cache.delete(f'graphql_suggestions_{follower.id}')
             return FollowUser(followed=True, message=f"Successfully followed {username}.")
-
-
+        
+        
 class LikePostMutation(graphene.Mutation):
     class Arguments:
         post_id = graphene.UUID(required=True)
@@ -206,6 +217,15 @@ class Query(graphene.ObjectType):
 
     @login_required
     def resolve_profile(self, info, username):
+        cache_key = f'graphql_profile_{username}'
+        cached_profile = cache.get(cache_key)
+        
+        if cached_profile:
+            print("Fetching profile from cache.")
+            return cached_profile
+        
+        print("Fetching profile from DB and setting cache.")
+
         try:
             # Use select_related and prefetch_related to optimize queries
             user = User.objects.select_related('profile').prefetch_related(
@@ -219,7 +239,9 @@ class Query(graphene.ObjectType):
                     ).order_by('-created_at')
                 )
             ).get(username=username)
-            return user.profile
+            profile = user.profile
+            cache.set(cache_key, profile, 60 * 60 * 2) # Cache for 2 hours
+            return profile
         except User.DoesNotExist:
             return None
 
@@ -228,8 +250,18 @@ class Query(graphene.ObjectType):
         if not username:
             return []
         
+        cache_key = f'graphql_search_profiles_{username}'
+        cached_data = cache.get(cache_key)
+        if cached_data:
+            print("Fetching from cache.")
+            return cached_data
+        
+        print("Fetching from DB and setting cache.")
         users = User.objects.filter(username__icontains=username)
-        return Profile.objects.filter(user__in=users)
+        profiles = list(Profile.objects.filter(user__in=users))
+        
+        cache.set(cache_key, profiles, 60 * 60) # Cache for 1 hour
+        return profiles
 
     @login_required
     def resolve_feed(self, info):
@@ -274,11 +306,20 @@ class Query(graphene.ObjectType):
     @login_required
     def resolve_suggestions(self, info):
         current_user = info.context.user
+        cache_key = f'graphql_suggestions_{current_user.id}'
+        cached_suggestions = cache.get(cache_key)
+
+        if cached_suggestions:
+            print("Fetching suggestions from cache.")
+            return cached_suggestions
+
+        print("Fetching suggestions from DB and setting cache.")
         following_user_ids = FollowersCount.objects.filter(follower=current_user).values_list('user__id', flat=True)
-        
         exclude_ids = list(following_user_ids) + [current_user.id]
         
-        suggestions_users = User.objects.exclude(id__in=exclude_ids).order_by('?')[:4]
+        suggestions_users = list(User.objects.exclude(id__in=exclude_ids).order_by('?')[:4])
         
-        return Profile.objects.filter(user__in=suggestions_users)
+        profiles = list(Profile.objects.filter(user__in=suggestions_users))
+        cache.set(cache_key, profiles, 60 * 15) # Cache for 15 minutes
+        return profiles
 

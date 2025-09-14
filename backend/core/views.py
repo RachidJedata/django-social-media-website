@@ -8,8 +8,13 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 from drf_spectacular.utils import extend_schema, OpenApiParameter
+from django.core.cache import cache
 from drf_spectacular.types import OpenApiTypes
 from django.db import IntegrityError
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+from django.utils.decorators import method_decorator
+from django.views.decorators.vary import vary_on_headers
 
 
 # Create your views here.
@@ -74,25 +79,36 @@ class PostViewSet(viewsets.ModelViewSet):
     parser_classes = [MultiPartParser, FormParser] # Required for handling file uploads
 
 
+
 class SearchAPIView(APIView):
     """
         This url is for searching for other users 
     """
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
+
 
     
     def get(self, request,username, *args, **kwargs):
-        user_object = request.user
-        user_profile = Profile.objects.get(user=user_object)
+         # Cache key based on the search parameter
+        cache_key = f'search_results_{username}'
 
-        username_objects = User.objects.filter(username__icontains=username)
-        searched_profiles = Profile.objects.filter(user__in=username_objects)
+        # Try to get the cached search results
+        searched_profiles = cache.get(cache_key)
+
+        if not searched_profiles:
+            # If not in cache, perform the expensive query
+            username_objects = User.objects.filter(username__icontains=username)
+            searched_profiles = Profile.objects.filter(user__in=username_objects)
+            
+            # Cache the results for 1 hour
+            cache.set(cache_key, searched_profiles, 60 * 60)
+            print("Fetching from DB and setting cache.")
+      
         
-        
-        user_profile_serializer = ProfileSerializer(user_profile)
         searched_serializer = ProfileSerializer(searched_profiles, many=True)
 
-        return Response({'user_profile': user_profile_serializer.data, 'username_profile_list': searched_serializer.data},status=status.HTTP_200_OK)
+        return Response({'username_profile_list': searched_serializer.data},status=status.HTTP_200_OK)
 
 
 class LikePostAPIView(APIView):
@@ -120,6 +136,18 @@ class LikePostAPIView(APIView):
             ),
         ]
     )
+
+    
+    @method_decorator(cache_page(60 * 15))  # Cache for 15 minutes
+    def list(self, request, *args, **kwargs):
+        # The list of posts will be cached
+        return super().list(request, *args, **kwargs)
+    
+    @method_decorator(cache_page(60 * 30))  # Cache for 30 minutes
+    def retrieve(self, request, *args, **kwargs):
+        # A single post will be cached
+        return super().retrieve(request, *args, **kwargs)
+    
     def post(self, request, *args, **kwargs):
         # Extract the post_id from the request body
         post_id = request.data.get('post_id')
@@ -170,6 +198,9 @@ class ProfileAPIView(APIView):
         description="Returns detailed information about a user's profile, including their posts, follower count, and follow status.",
         tags=['Profiles']
     )
+    # With auth: cache requested url for each user for 2 hours
+    @method_decorator(cache_page(60 * 60 * 2))
+    @method_decorator(vary_on_headers("Authorization"))
     def get(self,request,pk,*args, **kwargs):
         user_object = User.objects.get(username=pk)
         user_profile = Profile.objects.get(user=user_object)

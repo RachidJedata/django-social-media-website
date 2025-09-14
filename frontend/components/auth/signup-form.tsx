@@ -104,26 +104,6 @@ export function SignupForm() {
     finally {
       setIsLoading(false)
     }
-    // Mock registration - in real app, this would call your auth API
-    // setTimeout(() => {
-    //   const newUser = {
-    //     id: `550e8400-e29b-41d4-a716-${Date.now()}`,
-    //     username: formData.username,
-    //     email: formData.email,
-    //     first_name: formData.firstName,
-    //     last_name: formData.lastName,
-    //   }
-
-    //   localStorage.setItem("isAuthenticated", "true")
-    //   localStorage.setItem("currentUser", JSON.stringify(newUser))
-
-    //   toast({
-    //     title: "Account created!",
-    //     description: "Welcome to our social platform.",
-    //   })
-    //   router.push("/feed")
-    //   setIsLoading(false)
-    // }, 1000)
   }
 
   const handleInputChange = (field: string, value: string) => {

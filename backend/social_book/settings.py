@@ -29,7 +29,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -62,15 +61,18 @@ MIDDLEWARE = [
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
+    "http://frontend:3000",
 ]
 # For local development
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
+
+    'http://frontend:3000',
 ]
 
 CSRF_TRUSTED_COOKIES_DOMAINS = [
-    'localhost',
+    'localhost','localhost'
 ]
 
 ROOT_URLCONF = 'social_book.urls'
@@ -97,12 +99,19 @@ WSGI_APPLICATION = 'social_book.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
+     'default': {
+         'ENGINE': 'django.db.backends.{}'.format(
+             os.getenv('DATABASE_ENGINE', 'sqlite3')
+         ),
+         'NAME': os.getenv('POSTGRES_DB', 'social_media'),
+         'USER': os.getenv('POSTGRES_USER', 'root'),
+         'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'toor'),
+         'HOST': os.getenv('DATABASE_HOST', '127.0.0.1'),
+         'PORT': os.getenv('DATABASE_PORT', 5432),
+     }
+ }
 
 
 # Password validation
@@ -218,3 +227,14 @@ SIMPLE_JWT = {
 
 
 MY_DOMAIN="http://localhost:8000"
+
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": os.environ.get("CACHE_URL", "redis://127.0.0.1:6379/1"),
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
