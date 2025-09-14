@@ -51,7 +51,7 @@ export default function FeedPage() {
                     </div>
 
                     {/* Sidebar */}
-                    <div className="space-y-6">
+                    <div className="space-y-6 hidden md:block">
                         {data?.suggestions && data.suggestions.length !== 0 && (<UserSuggestions profiles={data.suggestions} />
                         )}
                     </div>
