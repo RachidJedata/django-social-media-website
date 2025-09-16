@@ -1,7 +1,8 @@
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.core.cache import cache
-from .models import Post, FollowersCount, LikePost, User
+from .models import Post, FollowersCount, LikePost, User, Profile
+from .tasks import send_welcome_email 
 
 # This signal handler creates a Profile only when a new User is created.
 # We use the 'created' flag to ensure it doesn't run on every user save.
@@ -18,6 +19,8 @@ def create_user_profile(sender, instance, created, **kwargs):
     """
     if created:
         Profile.objects.create(user=instance)
+        # Asynchronously send the welcome email
+        send_welcome_email.delay(user_email=instance.email)
 
 
 # This signal handler will be called every time a User object is deleted.
@@ -37,11 +40,6 @@ def delete_user_profile(sender, instance, **kwargs):
         pass # The profile might have already been deleted.
 
 
-# In your app's signals.py file
-from django.db.models.signals import post_save
-from django.dispatch import receiver
-from django.core.cache import cache
-from .models import User, Profile
 
 @receiver(post_save, sender=User)
 def clear_search_cache_on_user_update(sender, instance, **kwargs):
@@ -74,6 +72,7 @@ def invalidate_post_caches(sender, instance, **kwargs):
     # Invalidate the cache for the list of all posts
     cache_key_post_list = "views.decorators.cache.cache_page./posts/"
     cache.delete(cache_key_post_list)
+
 
     # Invalidate the cache for the user's profile, since a post was changed
     invalidate_profile_cache(instance.user)
@@ -113,13 +112,6 @@ def invalidate_profile_cache(user_or_post):
     else:
         return # Do nothing if it's not a User or a Post
 
-    # The cache key for the profile view is based on the URL, including the username.
-    # We must match the URL pattern.
-    cache_key_prefix = f'/profile/{username}/' 
-    # To delete all keys that start with this prefix, we need to iterate or use a key pattern.
-    # This might require a cache backend that supports pattern matching (like Redis).
-    # For a simple cache.delete, we need the exact key. We'll use a simpler approach.
-    
-    # Invalidate the specific cache key for the ProfileAPIView
-    cache_key = f"views.decorators.cache.cache_page.{cache_key_prefix}"
+
+    cache_key = f'graphql_profile_{username}'
     cache.delete(cache_key)

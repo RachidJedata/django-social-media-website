@@ -2,20 +2,14 @@ import graphene
 from graphene_django.types import DjangoObjectType
 from .models import Profile, FollowersCount, Post, LikePost, User
 from graphql_jwt.decorators import login_required
-from django.core.files.storage import default_storage
 import graphql_jwt
-from django.core.files.base import ContentFile
 import random
 from django.db.models import Count
 from django.utils import timezone
 from datetime import timedelta
-import base64
-from django.conf import settings
-import datetime
-import uuid
 from django.db.models import Prefetch
 from django.core.cache import cache
-
+from social_book.utils.rabbitmq import publish_to_queue
 
 # --- Object Types ---
 # These classes define the GraphQL types for your Django models.
@@ -74,39 +68,25 @@ class CreatePost(graphene.Mutation):
     def mutate(self, info, image, caption, description=None):
         user = info.context.user
         
+        # Create the post
+        post = Post(
+            user=user, 
+            caption=caption,
+            description=description
+        )
+        post.save()        
 
-         # Handle base64 image
-        if ';base64,' in image:
-            format, imgstr = image.split(';base64,')
-            ext = format.split('/')[-1]
-    
-            
-            timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-            
-            # Generate a unique filename
-            filename = f"{user.id}_{timestamp}_{uuid.uuid4().hex}.{ext}"
-            
-            # Decode the base64 image
-            data = ContentFile(base64.b64decode(imgstr), name=filename)
-            
-            # Save the file
-            file_path = default_storage.save(filename, data)
-            image_url = settings.MY_DOMAIN + default_storage.url(file_path)
 
-            
-            
-            # Create the post
-            post = Post(
-                user=user, 
-                image=image_url,
-                caption=caption,
-                description=description
-            )
-            post.save()
-            
-            return CreatePost(post=post)
-        else:
-            raise Exception("Invalid image format")
+        message_payload = {
+            'post_id':str(post.id),
+            'image_base64_data':image
+        }
+
+        publish_to_queue("image_processing_queue", message_payload)
+
+        # Return the post object immediately. The frontend can display a placeholder
+        # and refresh to see the processed image when it's ready.
+        return CreatePost(post=post)
         
 
 class UpdateProfile(graphene.Mutation):
@@ -219,6 +199,7 @@ class Query(graphene.ObjectType):
     def resolve_profile(self, info, username):
         cache_key = f'graphql_profile_{username}'
         cached_profile = cache.get(cache_key)
+        # cached_profile = None
         
         if cached_profile:
             print("Fetching profile from cache.")

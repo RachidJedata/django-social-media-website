@@ -63,7 +63,6 @@ def run():
             created_at = datetime.now() - timedelta(days=random.randint(1, 30), seconds=random.randint(1, 86400))
             post = Post.objects.create(
                 user=user,
-                # image=f'post_images/placeholder_{fake.random_int(min=1, max=10)}.jpg',
                 caption=fake.sentence(nb_words=10),
                 created_at=created_at
             )

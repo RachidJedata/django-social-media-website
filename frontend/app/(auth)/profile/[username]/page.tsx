@@ -17,6 +17,8 @@ export default function ProfilePage({
 
   const myProfile = useUser()
 
+  if (!myProfile?.user) return <NoteFound />
+
   const [profile, setProfile] = useState<GetProfileQuery['profile']>();
 
   const [getUser, { loading }] = useLazyQuery<GetProfileQuery>(GET_PROFILE);

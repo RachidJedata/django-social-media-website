@@ -79,3 +79,7 @@ query {
     bio
   }
 }
+
+
+
+python social_book/utils/consumer.py
