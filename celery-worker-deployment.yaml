@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: celery-worker
+  namespace: social-media
+  labels:
+    app: celery-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: celery-worker
+  template:
+    metadata:
+      labels:
+        app: celery-worker
+    spec:
+      containers:
+      - name: celery-worker
+        image: your-backend-image:latest # Use the same image as the backend
+        command: ["celery", "-A", "social_book", "worker", "--loglevel=info"]
+        env:
+        - name: CELERY_BROKER_URL
+          value: amqp://guest:guest@rabbitmq:5672//
