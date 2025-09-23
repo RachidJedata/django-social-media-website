@@ -17,17 +17,17 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: your-frontend-image:latest # Replace with your pre-built image
+        image: rachidjedata/social-media-frontend:v1
         ports:
         - containerPort: 3000
         env:
         - name: NEXT_PUBLIC_API_URL
-          value: http://backend:8000 # Use the internal Kubernetes service name
+          value: backend-service
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: frontend
+  name: frontend-service
   namespace: social-media
 spec:
   type: NodePort # Or LoadBalancer for cloud providers
