@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: celery-worker
-        image: your-backend-image:latest # Use the same image as the backend
+        image:  rachidjedata/social-media-backend:v1
         command: ["celery", "-A", "social_book", "worker", "--loglevel=info"]
         env:
         - name: CELERY_BROKER_URL
